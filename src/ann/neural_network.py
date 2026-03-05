@@ -3,11 +3,10 @@ neural_network.py - The NeuralNetwork class that orchestrates layers,
 forward/backward passes, training, and evaluation.
 
 Architecture:
-  Input → [Hidden Layer × num_layers] → Output (linear logits)
+  Input → [Hidden Layer × num_layers] → Output (softmax)
 
 Every hidden layer uses the specified activation function.
-The output layer returns RAW LOGITS (no softmax) as required by the autograder.
-Softmax is applied internally only when computing loss/predictions.
+The output layer always uses softmax.
 """
 
 import numpy as np
@@ -23,21 +22,22 @@ class NeuralNetwork:
         Initialize the neural network.
 
         Args:
-            cli_args: Command-line arguments (argparse.Namespace).
-                Expected attributes:
-                  - num_layers   : int   – number of hidden layers
-                  - hidden_size  : int   – neurons per hidden layer
-                  - activation   : str   – hidden layer activation
-                  - weight_init  : str   – 'random' or 'xavier'
-                  - loss         : str   – 'cross_entropy' or 'mean_squared_error'
-                  - optimizer    : str   – optimizer name
-                  - learning_rate: float
-                  - weight_decay : float
-                  - input_size   : int   – number of input features (default 784)
-                  - output_size  : int   – number of classes (default 10)
+            cli_args: Command-line arguments (argparse.Namespace) for
+                      configuring the network. Expected attributes:
+                        - num_layers   : int   – number of hidden layers
+                        - hidden_size  : int   – neurons per hidden layer
+                        - activation   : str   – hidden layer activation
+                        - weight_init  : str   – 'random' or 'xavier'
+                        - loss         : str   – 'cross_entropy' or 'mean_squared_error'
+                        - optimizer    : str   – optimizer name
+                        - learning_rate: float
+                        - weight_decay : float
+                        - input_size   : int   – number of input features (default 784)
+                        - output_size  : int   – number of classes        (default 10)
         """
         self.args = cli_args
 
+        # Resolve input/output sizes (with sensible defaults for MNIST)
         input_size  = getattr(cli_args, "input_size",  784)
         output_size = getattr(cli_args, "output_size", 10)
         num_layers  = getattr(cli_args, "num_layers", 3)
@@ -82,7 +82,7 @@ class NeuralNetwork:
         """
         Forward propagation through all layers.
 
-        Returns RAW LOGITS from the output layer (no softmax).
+        Returns RAW LOGITS from the output layer.
         The autograder verifies logits directly.
         Softmax is applied separately inside loss/predict methods.
 
@@ -186,8 +186,8 @@ class NeuralNetwork:
 
     def update_weights(self):
         """
-        Update all layer parameters using the configured optimizer.
-        Includes NaN/Inf guard to prevent silent weight corruption.
+        Update weights using the optimizer.
+        Applies the optimizer's update rule to all layer parameters.
         """
         self.optimizer.update(self.layers)
 
@@ -217,41 +217,39 @@ class NeuralNetwork:
 
     # ── Serialization ────────────────────────
 
-    def get_weights(self):
+    def get_weights(self) -> dict:
         """
-        Return all layer weights as a single dict.
-          {"layer_0": {"W": ..., "b": ...}, "layer_1": {...}, ...}
+        Return all layer weights as a flat dict.
+        Format: {"W0": ..., "b0": ..., "W1": ..., "b1": ..., ...}
 
-        Used with: np.save("best_model.npy", model.get_weights())
+        Save with: np.save("best_model.npy", model.get_weights())
+        Load with: model.set_weights(np.load("best_model.npy", allow_pickle=True).item())
         """
-        weights = {}
+        d = {}
         for i, layer in enumerate(self.layers):
-            weights[f"layer_{i}"] = {
-                "W": layer.W.copy(),
-                "b": layer.b.copy(),
-            }
-        return weights
+            d[f"W{i}"] = layer.W.copy()
+            d[f"b{i}"] = layer.b.copy()
+        return d
 
-    def set_weights(self, weights: dict):
+    def set_weights(self, weight_dict: dict):
         """
-        Load weights from a dict produced by get_weights().
-        Used with: model.set_weights(np.load("best_model.npy", allow_pickle=True).item())
+        Load weights from a flat dict produced by get_weights().
+        Silently skips any key not present in the dict.
 
         Args:
-            weights: Dict of {"layer_i": {"W": ndarray, "b": ndarray}}
+            weight_dict: {"W0": ndarray, "b0": ndarray, "W1": ..., ...}
         """
         for i, layer in enumerate(self.layers):
-            key = f"layer_{i}"
-            if key not in weights:
-                raise KeyError(f"Weight dict missing key '{key}'")
-            layer.W = weights[key]["W"].copy()
-            layer.b = weights[key]["b"].copy()
-            layer.grad_W = np.zeros_like(layer.W)
-            layer.grad_b = np.zeros_like(layer.b)
+            w_key = f"W{i}"
+            b_key = f"b{i}"
+            if w_key in weight_dict:
+                layer.W = weight_dict[w_key].copy()
+            if b_key in weight_dict:
+                layer.b = weight_dict[b_key].copy()
 
     def __repr__(self):
         arch = " → ".join(
-            f"Layer({l.in_features}→{l.out_features}, {l.activation_name})"
-            for l in self.layers
+            [f"Layer({l.in_features}→{l.out_features}, {l.activation_name})"
+             for l in self.layers]
         )
         return f"NeuralNetwork({arch})"
