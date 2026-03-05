@@ -92,11 +92,14 @@ class NeuralNetwork:
         Returns:
             logits: shape (batch_size, num_classes). Raw linear outputs.
         """
-        a = X
-        for layer in self.layers:
-            a = layer.forward(a)
-        return a   # raw logits
-
+        try:
+            a = X
+            for layer in self.layers:
+                a = layer.forward(a)
+            return a   # raw logits
+        except Exception as e:
+            print(f"Error during forward pass: {e}")
+            raise
     def predict_proba(self, X):
         """
         Run forward pass and apply softmax to get class probabilities.
