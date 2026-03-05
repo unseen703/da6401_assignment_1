@@ -1,0 +1,46 @@
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# ── Virtual environments ───────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+
+# ── Jupyter ────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*.ipynb
+
+# ── Dataset cache ─────────────────────────────────────────────────
+# Keras downloads MNIST/Fashion-MNIST here
+~/.keras/
+*.npz
+
+# ── Model weights and config ───────────────────────────────────────
+# Exclude all .npy files except the best model
+*.npy
+!src/best_model.npy
+*.npy.tmp
+_tmp_weights_*.npy
+
+# ── W&B ───────────────────────────────────────────────────────────
+wandb/
+artifacts/
+dipakkanzariya702-iitmaana/
+
+# ── IDE ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ── OS ────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Logs ──────────────────────────────────────────────────────────
+*.log
