@@ -40,10 +40,10 @@ class NeuralNetwork:
         # Resolve input/output sizes (with sensible defaults for MNIST)
         input_size  = getattr(cli_args, "input_size",  784)
         output_size = getattr(cli_args, "output_size", 10)
-        num_layers  = cli_args.num_layers
-        hidden_size = cli_args.hidden_size
-        activation  = cli_args.activation
-        weight_init = cli_args.weight_init
+        num_layers  = getattr(cli_args, "num_layers", 3)
+        hidden_size = getattr(cli_args, "hidden_size", 128)
+        activation  = getattr(cli_args, "activation", "relu")
+        weight_init = getattr(cli_args, "weight_init", "xavier")
 
         # ── Build layer stack ──────────────────────────────────────────────
         self.layers = []
@@ -71,9 +71,9 @@ class NeuralNetwork:
         self.loss_fn, self.loss_grad_fn = get_loss(cli_args.loss)
 
         self.optimizer = get_optimizer(
-           cli_args.optimizer,
-            learning_rate=cli_args.learning_rate,
-            weight_decay=cli_args.weight_decay,
+            getattr(cli_args, "optimizer", "rmsprop"),
+            learning_rate=getattr(cli_args, "learning_rate", 0.001),
+            weight_decay=getattr(cli_args, "weight_decay", 0.0),
         )
 
     # ── Forward pass ──────────────────────────────────────────────────────
@@ -237,45 +237,11 @@ class NeuralNetwork:
     def set_weights(self, weight_dict: dict):
         """
         Load weights from a flat dict produced by get_weights().
-
-        Rebuilds layer dimensions from the weight shapes if they differ
-        from the current architecture — ensures the autograder can load
-        any set of fixed weights regardless of CLI default args.
+        Silently skips any key not present in the dict.
 
         Args:
             weight_dict: {"W0": ndarray, "b0": ndarray, "W1": ..., ...}
         """
-        # Count how many layers are in the weight dict
-        num_layers = sum(1 for k in weight_dict if k.startswith("W"))
-
-        # If layer count or shapes differ, rebuild layers from weight shapes
-        rebuild = (num_layers != len(self.layers))
-        if not rebuild:
-            for i, layer in enumerate(self.layers):
-                w = weight_dict.get(f"W{i}")
-                if w is not None and w.shape != layer.W.shape:
-                    rebuild = True
-                    break
-
-        if rebuild:
-            # Reconstruct layer stack to match the weight dict exactly
-            self.layers = []
-            for i in range(num_layers):
-                W = weight_dict[f"W{i}"]
-                b = weight_dict[f"b{i}"]
-                in_f, out_f = W.shape
-                # Use activation from args for hidden layers, linear for output
-                act = (self.args.activation
-                       if i < num_layers - 1 else "linear")
-                layer = NeuralLayer(
-                    in_features=in_f,
-                    out_features=out_f,
-                    activation=act,
-                    weight_init=self.args.weight_init,
-                )
-                self.layers.append(layer)
-
-        # Load weights into layers
         for i, layer in enumerate(self.layers):
             w_key = f"W{i}"
             b_key = f"b{i}"
