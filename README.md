@@ -3,8 +3,8 @@
 A modular, configurable **NumPy-only** MLP implementation for classifying MNIST and Fashion-MNIST images.
 
 
-🔗 **W&B Report**: `https://wandb.ai/dipakkanzariya702-iitmaana/wandb_report/reports/DA6401-Assignment--VmlldzoxNjEwMjY0OQ?accessToken=jfks70tv55nzef88fk50u36qc14hedu95xs2wadli6umkv2yfww4bvwahj1xs941`  
-🔗 **GitHub Repository**: `https://github.com/unseen703/da6401_assignment_1/tree/main`
+🔗 **W&B Report**[https://wandb.ai/dipakkanzariya702-iitmaana/wandb_report/reports/DA6401-Assignment--VmlldzoxNjEwMjY0OQ?accessToken=jfks70tv55nzef88fk50u36qc14hedu95xs2wadli6umkv2yfww4bvwahj1xs941]
+🔗 **GitHub Repository**[https://github.com/unseen703/da6401_assignment_1/tree/main]
 
 ---
 
