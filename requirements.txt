@@ -1,3 +1,13 @@
-certifi==2026.2.25
+tensorflow==2.20.0
+scikit-learn==1.8.0
 numpy==2.4.2
-requests
+pandas
+keras==3.13.2
+pillow==12.1.1
+requests==2.32.5
+wandb==0.25.0
+gitpython==3.1.46
+pydantic==2.12.5
+PyYAML==6.0.3
+click==8.3.1
+rich==14.3.3

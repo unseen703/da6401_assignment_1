@@ -3,15 +3,15 @@
 A modular, configurable **NumPy-only** MLP implementation for classifying MNIST and Fashion-MNIST images.
 
 
-🔗 **W&B Report**: `<your-wandb-report-link>`  
-🔗 **GitHub Repository**: `<your-github-repo-link>`
+🔗 **W&B Report**: `https://wandb.ai/dipakkanzariya702-iitmaana/wandb_report/reports/DA6401-Assignment--VmlldzoxNjEwMjY0OQ?accessToken=jfks70tv55nzef88fk50u36qc14hedu95xs2wadli6umkv2yfww4bvwahj1xs941`  
+🔗 **GitHub Repository**: `https://github.com/unseen703/da6401_assignment_1/tree/main`
 
 ---
 
 ## Project Structure
 
 ```
-da6401_assignment1/
+da6401_assignment_1/
 ├── src/
 │   ├── ann/
 │   │   ├── __init__.py
@@ -21,13 +21,16 @@ da6401_assignment1/
 │   │   ├── objective_functions.py # Cross-entropy and MSE losses + gradients
 │   │   └── optimizers.py          # SGD, Momentum, NAG, RMSProp, Adam, Nadam
 │   └── utils/
-│       ├── __init__.py
-│       ├── data_utils.py          # Dataset loading, normalization, one-hot encoding
-│       └── metrics.py             # Accuracy, Precision, Recall, F1-score
-├── train.py                       # Training entry point (argparse CLI)
-├── inference.py                   # Inference entry point (loads .npy weights)
-├── best_model.npy                 # Saved best model weights (generated after training)
-├── best_config.json               # Best model configuration (generated after training)
+│   |    ├── __init__.py
+│   |   ├── data_utils.py          # Dataset loading, normalization, one-hot encoding
+│   |   └── metrics.py             # Accuracy, Precision, Recall, F1-score
+|   |
+|   ├── train.py                       # Training entry point (argparse CLI)
+|   ├── inference.py                   # Inference entry point (loads .npy weights)
+|   ├── best_model.npy                 # Saved best model weights (generated after training)
+|   └── best_config.json               # Best model configuration (generated after training)
+├── .gitignore
+├── requirements.txt
 └── README.md
 ```
 
@@ -38,8 +41,8 @@ da6401_assignment1/
 ### 1. Clone the repository
 
 ```bash
-git clone <your-github-repo-link>
-cd da6401_assignment1
+git clone https://github.com/unseen703/da6401_assignment_1/tree/main
+cd da6401_assignment_1
 ```
 
 ### 2. Create a virtual environment
@@ -60,7 +63,7 @@ pip install -r requirements.txt
 ### 4. Login to Weights & Biases
 
 ```bash
-wandb login <your W&B API>
+wandb login 
 ```
 
 ---
@@ -83,8 +86,8 @@ Run `train.py` with CLI arguments. All arguments have defaults matching the best
 | `-nhl` | `--num_layers` | `3` | Number of hidden layers |
 | `-sz` | `--hidden_size` | `128` | Neurons per hidden layer |
 | `-a` | `--activation` | `relu` | `sigmoid`, `tanh`, `relu` |
-| `-wi` | `--weight_init` | `xavier` | `random`, `xavier`, `zeros` |
-| `-wp` | `--wandb_project` | `None` | W&B project name |
+| `-w_i` | `--weight_init` | `xavier` | `random`, `xavier`, `zeros` |
+| `-w_p` | `--wandb_project` | `None` | W&B project name |
 
 ### Basic training run
 
@@ -100,24 +103,24 @@ python train.py \
   -nhl 3 \
   -sz 128 \
   -a relu \
-  -wi xavier \
-  -wp your_wandb_project
+  -w_i xavier \
+  -w_p your_wandb_project
 ```
 
 ### Training with W&B logging enabled
 
 ```bash
 # Log sample images (Data Exploration)
-python train.py -d mnist -e 1 -wp your_wandb_project --log_images
+python train.py -d mnist -e 1 -w_p your_wandb_project --log_images
 
 # Log gradient norms every 50 steps (Vanishing Gradient analysis)
-python train.py -d mnist -e 10 -wp your_wandb_project --log_gradients --grad_log_steps 50
+python train.py -d mnist -e 10 -w_p your_wandb_project --log_gradients --grad_log_steps 50
 
 # Log dead neuron fraction every 2 epochs
-python train.py -d mnist -e 10 -o rmsprop -lr 0.1 -a relu -wp your_wandb_project --log_activations
+python train.py -d mnist -e 10 -o rmsprop -lr 0.1 -a relu -w_p your_wandb_project --log_activations
 
 # Log confusion matrix and per-class accuracy on test set
-python train.py -d mnist -e 15 -wp your_wandb_project --log_conf_matrix
+python train.py -d mnist -e 15 -w_p your_wandb_project --log_conf_matrix
 ```
 
 ### Training on Fashion-MNIST
@@ -131,8 +134,8 @@ python train.py \
   -nhl 3 \
   -sz 128 \
   -a relu \
-  -wi xavier \
-  -wp your_wandb_project
+  -w_i xavier \
+  -w_p your_wandb_project
 ```
 
 > **Note:** The best model weights are saved to `src/best_model.npy` and configuration to `src/best_config.json`. These files are only overwritten if a new run achieves a higher validation F1-score than the existing saved model.
@@ -156,10 +159,10 @@ python inference.py --model_path src/best_model.npy
 
 **Output:**
 ```
-Accuracy  : 0.9812
-Precision : 0.9813
-Recall    : 0.9811
-F1-score  : 0.9812
+Accuracy  : 0.9800
+Precision : 0.9799
+Recall    : 0.9798
+F1-score  : 0.9799
 ```
 
 ---
@@ -178,12 +181,12 @@ python sweep.py --project your_wandb_project --count 100
 
 | Parameter | Values |
 |-----------|--------|
-| `epochs` | 10, 25, 50 |
+| `epochs` | 25, 35 |
 | `optimizer` | sgd, momentum, nag, rmsprop |
 | `learning_rate` | log-uniform [1e-4, 1e-1] |
 | `weight_decay` | log-uniform [1e-5, 1e-2] |
 | `batch_size` | 32, 64, 128 |
-| `num_layers` | 1, 2, 3, 4, 5 |
+| `num_layers` | 1, 2, 3, 4, 5, 6 |
 | `hidden_size` | 32, 64, 128 |
 | `activation` | sigmoid, tanh, relu |
 | `weight_init` | random, xavier |
@@ -276,125 +279,3 @@ python inference.py
 ```
 
 ---
-
-## Implementation Details
-
-### Weight Initialization
-
-| Method | Formula | When to use |
-|--------|---------|-------------|
-| `xavier` | `U(-√(6/(in+out)), √(6/(in+out)))` | Default — keeps gradient variance stable |
-| `random` | `N(0, 0.01)` | Simple baseline |
-| `zeros` | All zeros | Symmetry experiment only — network cannot learn |
-
-### Optimizers
-
-| Optimizer | Key property |
-|-----------|-------------|
-| `sgd` | Fixed learning rate for all parameters |
-| `momentum` | Exponential moving average of gradients — faster convergence |
-| `nag` | Looks ahead before updating — corrects overshoot |
-| `rmsprop` | Adaptive per-parameter learning rate — best for image classification |
-
-### Loss Functions
-
-| Loss | Gradient | Best for |
-|------|---------|---------|
-| `cross_entropy` | `(y_pred - y_true) / N` — always proportional to error | Classification |
-| `mean_squared_error` | Full softmax Jacobian applied | Comparison experiments |
-
----
-
-## Constraints
-
-- Maximum hidden layers: **6**
-- Maximum neurons per layer: **128**
-- No PyTorch, TensorFlow, JAX, or any autodiff library
-- NumPy only for all mathematical operations
----
-
-## Training
-
-```bash
-python train.py \
-  -d mnist \
-  -e 10 \
-  -b 64 \
-  -l cross_entropy \
-  -o adam \
-  -lr 0.001 \
-  -wd 0.0 \
-  -nhl 3 \
-  -sz 128 \
-  -a relu \
-  -wi xavier \
-  --save_model best_model.npy \
-  --save_config best_config.json
-```
-
-### All CLI Arguments
-
-| Flag | Long | Description | Default |
-|------|------|-------------|---------|
-| `-d` | `--dataset` | `mnist` or `fashion_mnist` | `mnist` |
-| `-e` | `--epochs` | Number of training epochs | `10` |
-| `-b` | `--batch_size` | Mini-batch size | `64` |
-| `-l` | `--loss` | `cross_entropy` or `mean_squared_error` | `cross_entropy` |
-| `-o` | `--optimizer` | `sgd`, `momentum`, `nag`, `rmsprop`, `adam`, `nadam` | `adam` |
-| `-lr` | `--learning_rate` | Learning rate | `0.001` |
-| `-wd` | `--weight_decay` | L2 regularization coefficient | `0.0` |
-| `-nhl` | `--num_layers` | Number of hidden layers | `3` |
-| `-sz` | `--hidden_size` | Neurons per hidden layer | `128` |
-| `-a` | `--activation` | `sigmoid`, `tanh`, or `relu` | `relu` |
-| `-w_i` | `--weight_init` | `random` or `xavier` | `xavier` |
-| `-w_p` | `--weight_init` | `random` or `xavier` | `xavier` |
-
-| — | `--save_model` | Path to save model `.npy` | `best_model.npy` |
-| — | `--save_config` | Path to save config `.json` | `best_config.json` |
-
----
-
-## Inference
-
-```bash
-python inference.py \
-  --model best_model.npy \
-  --config best_config.json \
-  -d mnist
-```
-
-Outputs **Accuracy, Precision, Recall, F1-score** on the test set.
-
----
-
-## Architecture & Implementation Details
-
-### Activations (`src/ann/activations.py`)
-- **Sigmoid** — numerically clipped to avoid overflow
-- **Tanh** — standard `np.tanh`
-- **ReLU** — `max(0, z)` with correct subgradient at zero
-- **Softmax** — numerically stable (row-wise max subtraction)
-
-### Layers (`src/ann/neural_layer.py`)
-- Each `NeuralLayer` stores `W`, `b` and exposes `grad_W`, `grad_b` after every backward call
-- Weight initialization: **random** (Gaussian ×0.01) or **Xavier** uniform
-
-### Optimizers (`src/ann/optimizers.py`)
-All optimizers support L2 weight decay:
-- **SGD** — vanilla gradient descent
-- **Momentum** — exponential moving average of gradients
-- **NAG** — Nesterov look-ahead momentum
-- **RMSProp** — adaptive learning rates via squared-gradient moving average
-- **Adam** — first + second moment estimation with bias correction
-- **Nadam** — Adam + Nesterov momentum
-
-### Losses (`src/ann/objective_functions.py`)
-- **Cross-entropy** — with numerically stable softmax+CE combined gradient
-- **MSE** — mean squared error, with element-wise softmax Jacobian approximation
-
----
-
-## Notes
-- Hidden layers: ≤ 6 layers, ≤ 128 neurons per layer (as per assignment constraints)
-- The best model is saved based on **validation F1-score**
-- All `numpy` operations; no automatic differentiation
