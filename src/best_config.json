@@ -21,9 +21,9 @@
   "grad_log_steps": 50,
   "input_size": 784,
   "output_size": 10,
-  "best_val_f1": 0.9808160485244105,
-  "test_accuracy": 0.9801,
-  "test_precision": 0.9800840349995955,
-  "test_recall": 0.9798346334675125,
-  "test_f1": 0.9799364618581647
+  "best_val_f1": 0.9793298191283408,
+  "test_accuracy": 0.9808,
+  "test_precision": 0.9807891059822559,
+  "test_recall": 0.9806455268914158,
+  "test_f1": 0.9806983337864137
 }
