@@ -257,23 +257,23 @@ class NeuralNetwork:
                     rebuild = True
                     break
 
-        # if rebuild:
-        #     # Reconstruct layer stack to match the weight dict exactly
-        #     self.layers = []
-        #     for i in range(num_layers):
-        #         W = weight_dict[f"W{i}"]
-        #         b = weight_dict[f"b{i}"]
-        #         in_f, out_f = W.shape
-        #         # Use activation from args for hidden layers, linear for output
-        #         act = (self.args.activation
-        #                if i < num_layers - 1 else "linear")
-        #         layer = NeuralLayer(
-        #             in_features=in_f,
-        #             out_features=out_f,
-        #             activation=act,
-        #             weight_init=self.args.weight_init,
-        #         )
-        #         self.layers.append(layer)
+        if rebuild:
+            # Reconstruct layer stack to match the weight dict exactly
+            self.layers = []
+            for i in range(num_layers):
+                W = weight_dict[f"W{i}"]
+                b = weight_dict[f"b{i}"]
+                in_f, out_f = W.shape
+                # Use activation from args for hidden layers, linear for output
+                act = (self.args.activation
+                       if i < num_layers - 1 else "linear")
+                layer = NeuralLayer(
+                    in_features=in_f,
+                    out_features=out_f,
+                    activation=act,
+                    weight_init=self.args.weight_init,
+                )
+                self.layers.append(layer)
 
         # Load weights into layers
         for i, layer in enumerate(self.layers):
