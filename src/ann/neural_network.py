@@ -40,10 +40,10 @@ class NeuralNetwork:
         # Resolve input/output sizes (with sensible defaults for MNIST)
         input_size  = getattr(cli_args, "input_size",  784)
         output_size = getattr(cli_args, "output_size", 10)
-        num_layers  = getattr(cli_args, "num_layers", 3)
-        hidden_size = getattr(cli_args, "hidden_size", 128)
-        activation  = getattr(cli_args, "activation", "relu")
-        weight_init = getattr(cli_args, "weight_init", "xavier")
+        num_layers  = cli_args.num_layers
+        hidden_size = cli_args.hidden_size
+        activation  = cli_args.activation
+        weight_init = cli_args.weight_init
 
         # ── Build layer stack ──────────────────────────────────────────────
         self.layers = []
@@ -71,9 +71,9 @@ class NeuralNetwork:
         self.loss_fn, self.loss_grad_fn = get_loss(cli_args.loss)
 
         self.optimizer = get_optimizer(
-            getattr(cli_args, "optimizer", "rmsprop"),
-            learning_rate=getattr(cli_args, "learning_rate", 0.001),
-            weight_decay=getattr(cli_args, "weight_decay", 0.0),
+           cli_args.optimizer,
+            learning_rate=cli_args.learning_rate,
+            weight_decay=cli_args.weight_decay,
         )
 
     # ── Forward pass ──────────────────────────────────────────────────────
