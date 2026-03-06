@@ -45,9 +45,9 @@ def build_parser() -> argparse.ArgumentParser:
                         choices=["random", "xavier", "zeros"])
     parser.add_argument("-w_p", "--wandb_project", type=str,  default=None,
                         help="Weights & Biases project name.")
-    parser.add_argument("--save_model",  type=str, default="src/best_model.npy",
+    parser.add_argument("--save_model",  type=str, default="best_model.npy",
                         help="Path to save best model weights.")
-    parser.add_argument("--save_config", type=str, default="src/best_config.json",
+    parser.add_argument("--save_config", type=str, default="best_config.json",
                         help="Path to save best model config.")
 
     # Extra flags used by experiments.py

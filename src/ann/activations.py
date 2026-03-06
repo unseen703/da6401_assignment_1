@@ -71,12 +71,22 @@ def softmax(z):
 
 # ── Dispatch maps ──────────────────────────────────────────────────────────
 
+def linear(z):
+    """Linear (identity) activation — used for output layer to return raw logits."""
+    return z
+
+
+def linear_derivative(z):
+    """Derivative of linear activation: always 1."""
+    return np.ones_like(z)
+
+
 ACTIVATION_MAP = {
     "sigmoid": sigmoid,
     "tanh":    tanh,
     "relu":    relu,
-    "linear":  linear,    # output layer — returns raw logits
-    "softmax": softmax,   # inference only
+    "softmax": softmax,
+    "linear":  linear,
 }
 
 DERIVATIVE_MAP = {

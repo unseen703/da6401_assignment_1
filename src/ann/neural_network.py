@@ -120,32 +120,22 @@ class NeuralNetwork:
 
     # ── Backward pass ─────────────────────────────────────────────────────
 
-    def backward(self, y_true, y_pred):
+    def backward(self, y_true, y_pred, from_logits=False):
         """
         Backward propagation to compute gradients.
 
-        Accepts either logits OR probabilities as y_pred — softmax is
-        applied internally so the autograder can pass logits directly.
-
-        Gradients are stored in each layer's .grad_W and .grad_b.
-        Returns gradients ordered LAST layer → FIRST layer.
-
         Args:
-            y_true : One-hot labels,          shape (N, C).
-            y_pred : Logits OR softmax probs, shape (N, C).
+            y_true      : One-hot labels,          shape (N, C).
+            y_pred      : Softmax probs OR logits, shape (N, C).
+            from_logits : Set True if y_pred is raw logits (autograder use).
+                          Default False — expects softmax probabilities (train.py use).
 
         Returns:
             grad_w: List[ndarray] — weight gradients, last layer → first layer.
             grad_b: List[ndarray] — bias gradients,   last layer → first layer.
         """
-        # Detect whether y_pred is logits or probabilities.
-        # Probabilities sum to ~1 per row; logits don't.
-        # If already probabilities, use directly. If logits, apply softmax.
-        row_sums = y_pred.sum(axis=1)
-        if np.allclose(row_sums, 1.0, atol=1e-3):
-            probs = y_pred          # already softmax probabilities
-        else:
-            probs = softmax(y_pred) # raw logits — apply softmax
+        # Apply softmax only if raw logits are passed in
+        probs = softmax(y_pred) if from_logits else y_pred
 
         loss_gradient = self.loss_grad_fn(y_true, probs)
 
@@ -189,12 +179,13 @@ class NeuralNetwork:
         """
         Global gradient norm clipping.
         Scales ALL gradients proportionally if total L2 norm exceeds max_norm.
-        This preserves gradient direction while preventing explosion.
+        Preserves gradient direction while preventing explosion.
+        Called from update_weights() — NOT from backward().
         """
-        total_norm = 0.0
-        for layer in self.layers:
-            total_norm += np.sum(layer.grad_W ** 2)
-            total_norm += np.sum(layer.grad_b ** 2)
+        total_norm = sum(
+            np.sum(layer.grad_W ** 2) + np.sum(layer.grad_b ** 2)
+            for layer in self.layers
+        )
         total_norm = np.sqrt(total_norm)
 
         if total_norm > max_norm:

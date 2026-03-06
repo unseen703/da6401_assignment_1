@@ -10,9 +10,9 @@
   "hidden_size": 128,
   "activation": "relu",
   "weight_init": "xavier",
-  "save_model": "best_model.npy",
-  "save_config": "best_config.json",
   "wandb_project": null,
+  "save_model": "src/best_model.npy",
+  "save_config": "src/best_config.json",
   "tags": null,
   "log_images": false,
   "log_gradients": false,
@@ -21,9 +21,9 @@
   "grad_log_steps": 50,
   "input_size": 784,
   "output_size": 10,
-  "best_val_f1": 0.9786033317331002,
-  "test_accuracy": 0.9767,
-  "test_precision": 0.9767853876921961,
-  "test_recall": 0.9765210980890693,
-  "test_f1": 0.9765749884614003
+  "best_val_f1": 0.9798412909618609,
+  "test_accuracy": 0.9785,
+  "test_precision": 0.9782759624116908,
+  "test_recall": 0.9783740784118278,
+  "test_f1": 0.9783136244512791
 }
