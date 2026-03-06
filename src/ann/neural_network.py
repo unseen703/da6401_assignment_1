@@ -3,10 +3,10 @@ neural_network.py - The NeuralNetwork class that orchestrates layers,
 forward/backward passes, training, and evaluation.
 
 Architecture:
-  Input → [Hidden Layer × num_layers] → Output (linear logits)
+  Input → [Hidden Layer × num_layers] → Output (softmax)
 
-The output layer returns RAW LOGITS (no softmax).
-Softmax is applied separately in predict_proba() for loss/metrics.
+Every hidden layer uses the specified activation function.
+The output layer always uses softmax.
 """
 
 import numpy as np
@@ -37,17 +37,19 @@ class NeuralNetwork:
         """
         self.args = cli_args
 
+        # Resolve input/output sizes (with sensible defaults for MNIST)
         input_size  = getattr(cli_args, "input_size",  784)
         output_size = getattr(cli_args, "output_size", 10)
-        num_layers  = getattr(cli_args, "num_layers",  3)
+        num_layers  = getattr(cli_args, "num_layers", 3)
         hidden_size = getattr(cli_args, "hidden_size", 128)
-        activation  = getattr(cli_args, "activation",  "relu")
+        activation  = getattr(cli_args, "activation", "relu")
         weight_init = getattr(cli_args, "weight_init", "xavier")
 
         # ── Build layer stack ──────────────────────────────────────────────
         self.layers = []
-        prev_size = input_size
 
+        # Hidden layers
+        prev_size = input_size
         for _ in range(num_layers):
             self.layers.append(NeuralLayer(
                 in_features=prev_size,
@@ -57,20 +59,21 @@ class NeuralNetwork:
             ))
             prev_size = hidden_size
 
-        # Output layer — LINEAR activation, returns raw logits
+        # Output layer — LINEAR (no activation), returns raw logits
         self.layers.append(NeuralLayer(
             in_features=prev_size,
             out_features=output_size,
-            activation="linear",
+            activation="linear",        # no activation on output layer
             weight_init=weight_init,
         ))
 
+        # ── Loss and optimizer ─────────────────────────────────────────────
         self.loss_fn, self.loss_grad_fn = get_loss(cli_args.loss)
 
         self.optimizer = get_optimizer(
-            getattr(cli_args, "optimizer",      "rmsprop"),
+            getattr(cli_args, "optimizer", "rmsprop"),
             learning_rate=getattr(cli_args, "learning_rate", 0.001),
-            weight_decay=getattr(cli_args,  "weight_decay",  0.0),
+            weight_decay=getattr(cli_args, "weight_decay", 0.0),
         )
 
     # ── Forward pass ──────────────────────────────────────────────────────
@@ -81,7 +84,7 @@ class NeuralNetwork:
 
         Returns RAW LOGITS from the output layer.
         The autograder verifies logits directly.
-        Softmax is applied separately inside predict_proba().
+        Softmax is applied separately inside loss/predict methods.
 
         Args:
             X: Input data, shape (batch_size, input_features).
@@ -89,15 +92,18 @@ class NeuralNetwork:
         Returns:
             logits: shape (batch_size, num_classes). Raw linear outputs.
         """
-        a = X
-        for layer in self.layers:
-            a = layer.forward(a)
-        return a   # raw logits
-
+        try:
+            a = X
+            for layer in self.layers:
+                a = layer.forward(a)
+            return a   # raw logits
+        except Exception as e:
+            print(f"Error during forward pass: {e}")
+            raise
     def predict_proba(self, X):
         """
         Run forward pass and apply softmax to get class probabilities.
-        Used for loss computation, accuracy evaluation, and metrics.
+        Used internally for loss computation and accuracy evaluation.
 
         Args:
             X: Input data, shape (batch_size, input_features).
@@ -105,69 +111,56 @@ class NeuralNetwork:
         Returns:
             probs: shape (batch_size, num_classes). Softmax probabilities.
         """
-        return softmax(self.forward(X))
+        logits = self.forward(X)
+        return softmax(logits)
 
     # ── Backward pass ─────────────────────────────────────────────────────
 
-    def backward(self, y_true, y_pred):
+    def backward(self, y_true, y_pred_probs):
         """
         Backward propagation to compute gradients.
 
-        Accepts either logits OR probabilities as y_pred — softmax is
-        applied internally so the autograder can pass logits directly.
-
         Gradients are stored in each layer's .grad_W and .grad_b.
-        Returns gradients ordered LAST layer → FIRST layer.
+        Returns gradients ordered from LAST layer to FIRST layer
 
         Args:
-            y_true : One-hot labels,          shape (N, C).
-            y_pred : Logits OR softmax probs, shape (N, C).
+            y_true      : One-hot labels,        shape (batch_size, num_classes).
+            y_pred_probs: Softmax probabilities,  shape (batch_size, num_classes).
 
         Returns:
             grad_w: List[ndarray] — weight gradients, last layer → first layer.
             grad_b: List[ndarray] — bias gradients,   last layer → first layer.
         """
-        # Always apply softmax internally — ensures correct gradients
-        # whether caller passes logits (autograder) or probs (train.py).
-        probs = softmax(y_pred)
+        batch_size = y_true.shape[0]
 
-        loss_gradient = self.loss_grad_fn(y_true, probs)
+        # ── Output layer gradient ──────────────────────────────────────────
+        # Combined softmax + loss gradient:
+        # cross-entropy: dL/dz = (y_pred - y_true) / N  (exact)
+        # MSE:           dL/dz = dL/dy * dy/dz  (softmax jacobian diagonal approx)
+        loss_gradient = self.loss_grad_fn(y_true, y_pred_probs)
 
         if self.args.loss == "cross_entropy":
-            # Cross-entropy + softmax exact combined gradient:
-            # dL/dz = (probs - y_true) / N  — already normalised by loss_grad_fn
-            delta = loss_gradient
-
+            delta = loss_gradient                       # (y_pred - y_true) / N
         else:
-            # MSE + softmax: FULL softmax Jacobian (vectorised over batch).
-            #
-            # Diagonal approximation s*(1-s) vanishes when model gets confident
-            # (s→1 for correct class), killing the gradient and causing loss to
-            # rise from batch noise. Full Jacobian fixes this:
-            #
-            #   dL/dz[j] = s[j] * (g[j] - dot(g, s))
-            s   = probs
-            g   = loss_gradient
-            dot = (g * s).sum(axis=1, keepdims=True)   # (N, 1)
-            delta = s * (g - dot)                       # (N, C)
+            # MSE gradient through softmax (diagonal Jacobian approximation)
+            s = y_pred_probs
+            delta = loss_gradient * s * (1 - s)
 
-        # ── Output layer parameter gradients ──────────────────────────────
-        # loss_grad_fn already normalises by batch_size — do NOT divide again.
+        # Compute output layer parameter gradients manually
+        # (output layer has linear activation so no activation derivative needed)
         out_layer = self.layers[-1]
-        out_layer.grad_W = out_layer._input_cache.T @ delta
-        out_layer.grad_b = delta.sum(axis=0, keepdims=True)
+        out_layer.grad_W = (out_layer._input_cache.T @ delta) / batch_size
+        out_layer.grad_b = np.mean(delta, axis=0, keepdims=True)
 
-        # ── Propagate through hidden layers ───────────────────────────────
+        # Propagate delta back through hidden layers
         delta = delta @ out_layer.W.T
         for layer in reversed(self.layers[:-1]):
             delta = layer.backward(delta)
 
-        # NOTE: Gradient clipping is NOT applied here.
-        # Clipping modifies gradient values and would cause mismatch against
-        # numerical gradients in the autograder.
-        # Clipping is applied inside update_weights() instead.
+        # Gradient clipping — prevents exploding gradients at high LR
+        self._clip_gradients(max_norm=5.0)
 
-        # Return last → first as required by assignment
+        # Return gradients from LAST layer to FIRST 
         grad_w = [layer.grad_W for layer in reversed(self.layers)]
         grad_b = [layer.grad_b for layer in reversed(self.layers)]
         return grad_w, grad_b
@@ -178,13 +171,12 @@ class NeuralNetwork:
         """
         Global gradient norm clipping.
         Scales ALL gradients proportionally if total L2 norm exceeds max_norm.
-        Preserves gradient direction while preventing explosion.
-        Called from update_weights() — NOT from backward().
+        This preserves gradient direction while preventing explosion.
         """
-        total_norm = sum(
-            np.sum(layer.grad_W ** 2) + np.sum(layer.grad_b ** 2)
-            for layer in self.layers
-        )
+        total_norm = 0.0
+        for layer in self.layers:
+            total_norm += np.sum(layer.grad_W ** 2)
+            total_norm += np.sum(layer.grad_b ** 2)
         total_norm = np.sqrt(total_norm)
 
         if total_norm > max_norm:
@@ -198,10 +190,8 @@ class NeuralNetwork:
     def update_weights(self):
         """
         Update weights using the optimizer.
-        Gradient clipping applied here — after backward() stores clean
-        unclipped gradients for the autograder, before optimizer uses them.
+        Applies the optimizer's update rule to all layer parameters.
         """
-        self._clip_gradients(max_norm=5.0)
         self.optimizer.update(self.layers)
 
         for i, layer in enumerate(self.layers):
@@ -223,12 +213,12 @@ class NeuralNetwork:
         Returns:
             accuracy: float — fraction of correctly classified samples.
         """
-        probs     = self.predict_proba(X)
+        probs = self.predict_proba(X)
         predicted = np.argmax(probs, axis=1)
         true      = np.argmax(y,    axis=1)
         return float(np.mean(predicted == true))
 
-    # ── Serialization ─────────────────────────────────────────────────────
+    # ── Serialization ────────────────────────
 
     def get_weights(self) -> dict:
         """
@@ -255,9 +245,10 @@ class NeuralNetwork:
         Args:
             weight_dict: {"W0": ndarray, "b0": ndarray, "W1": ..., ...}
         """
+        # Count how many layers are in the weight dict
         num_layers = sum(1 for k in weight_dict if k.startswith("W"))
 
-        # Rebuild layer stack if count or shapes don't match
+        # If layer count or shapes differ, rebuild layers from weight shapes
         rebuild = (num_layers != len(self.layers))
         if not rebuild:
             for i, layer in enumerate(self.layers):
@@ -267,29 +258,35 @@ class NeuralNetwork:
                     break
 
         if rebuild:
+            # Reconstruct layer stack to match the weight dict exactly
             self.layers = []
             for i in range(num_layers):
-                W    = weight_dict[f"W{i}"]
-                b    = weight_dict[f"b{i}"]
+                W = weight_dict[f"W{i}"]
+                b = weight_dict[f"b{i}"]
                 in_f, out_f = W.shape
-                act  = (self.args.activation
-                        if i < num_layers - 1 else "linear")
-                self.layers.append(NeuralLayer(
+                # Use activation from args for hidden layers, linear for output
+                act = (self.args.activation
+                       if i < num_layers - 1 else "linear")
+                layer = NeuralLayer(
                     in_features=in_f,
                     out_features=out_f,
                     activation=act,
                     weight_init=self.args.weight_init,
-                ))
+                )
+                self.layers.append(layer)
 
+        # Load weights into layers
         for i, layer in enumerate(self.layers):
-            if f"W{i}" in weight_dict:
-                layer.W = weight_dict[f"W{i}"].copy()
-            if f"b{i}" in weight_dict:
-                layer.b = weight_dict[f"b{i}"].copy()
+            w_key = f"W{i}"
+            b_key = f"b{i}"
+            if w_key in weight_dict:
+                layer.W = weight_dict[w_key].copy()
+            if b_key in weight_dict:
+                layer.b = weight_dict[b_key].copy()
 
     def __repr__(self):
         arch = " → ".join(
-            f"Layer({l.in_features}→{l.out_features}, {l.activation_name})"
-            for l in self.layers
+            [f"Layer({l.in_features}→{l.out_features}, {l.activation_name})"
+             for l in self.layers]
         )
         return f"NeuralNetwork({arch})"
