@@ -77,6 +77,7 @@ class NeuralLayer:
             limit = np.sqrt(6.0 / (self.in_features + self.out_features))
             W = np.random.uniform(-limit, limit, (self.in_features, self.out_features))
         elif method == "zeros":
+            # Q2.9: All-zeros init to demonstrate symmetry problem
             W = np.zeros((self.in_features, self.out_features))
         else:
             raise ValueError(f"Unknown weight_init '{method}'. Choose 'random', 'xavier', or 'zeros'.")
@@ -106,7 +107,7 @@ class NeuralLayer:
 
     # ------------------------------------------------------------
     # Backward pass
-    # -------------------------------------------------------------
+    # -----------------------------------------------------------
 
     def backward(self, delta: np.ndarray) -> np.ndarray:
         """
@@ -124,18 +125,16 @@ class NeuralLayer:
             delta_prev: Error signal to propagate to the previous layer,
                         shape (batch_size, in_features).
         """
-        batch_size = self._input_cache.shape[0]
-
         # Apply activation derivative for hidden layers
         if self._derivative_fn is not None:
             dz = delta * self._derivative_fn(self._z_cache)  # element-wise
         else:
-            # softmax + cross-entropy: delta already equals dL/dz
             dz = delta
 
-        # Gradients for this layer's parameters
+        # Gradients for this layer's parameters — normalise by batch_size
+        batch_size = self._input_cache.shape[0]
         self.grad_W = (self._input_cache.T @ dz) / batch_size
-        self.grad_b = np.mean(dz, axis=0, keepdims=True)
+        self.grad_b = dz.sum(axis=0, keepdims=True) / batch_size
 
         # Propagate error to previous layer
         delta_prev = dz @ self.W.T

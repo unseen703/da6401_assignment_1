@@ -46,8 +46,8 @@ def cross_entropy_gradient(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray
     Returns:
         Gradient w.r.t. logits, shape (batch, num_classes).
     """
-    batch_size = y_true.shape[0]
-    return (y_pred - y_true) / batch_size
+    # Return raw gradient — normalisation by batch_size is done in backward()
+    return y_pred - y_true
 
 
 # -----------------------------------------------------------------
@@ -83,8 +83,8 @@ def mse_gradient(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     Returns:
         Gradient w.r.t. y_pred, shape (batch, num_classes).
     """
-    batch_size = y_true.shape[0]
-    return 2.0 * (y_pred - y_true) / batch_size
+    # Return raw gradient — normalisation by batch_size is done in backward()
+    return 2.0 * (y_pred - y_true)
 
 
 # -----------------------------------------------------------------
