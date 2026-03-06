@@ -85,7 +85,7 @@ def log_gradient_norms(model, step):
         log_dict[f"layer_{i}_b - grad_norm"] = float(np.linalg.norm(layer.grad_b))
     gW0 = model.layers[0].grad_W
     for n in range(min(5, gW0.shape[1])):
-        log_dict[f"layer0_neuron{n} - neuron_grad"] = float(np.linalg.norm(gW0[:, n]))
+        log_dict[f"neuron_grad/layer0_neuron{n}"] = float(np.linalg.norm(gW0[:, n]))
     wandb.log(log_dict, step=step)
 
 
@@ -102,11 +102,7 @@ def log_activation_stats(model, X_sample, step):
 
 
 def log_confusion_matrix(y_true_oh, y_pred_probs, dataset_name):
-    """confusion matrix + per-class accuracy bar chart."""
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+    from sklearn.metrics import confusion_matrix
 
     FASHION_NAMES = ["T-shirt","Trouser","Pullover","Dress","Coat",
                      "Sandal","Shirt","Sneaker","Bag","Ankle boot"]
@@ -114,32 +110,33 @@ def log_confusion_matrix(y_true_oh, y_pred_probs, dataset_name):
     names  = FASHION_NAMES if "fashion" in dataset_name else MNIST_NAMES
     y_true = np.argmax(y_true_oh,    axis=1)
     y_pred = np.argmax(y_pred_probs, axis=1)
-    cm     = confusion_matrix(y_true, y_pred)
 
-    fig, ax = plt.subplots(figsize=(10, 8))
-    ConfusionMatrixDisplay(cm, display_labels=names).plot(
-        ax=ax, cmap="Blues", colorbar=False, xticks_rotation=45)
-    ax.set_title("Confusion Matrix – Best Model (Test Set)")
-    plt.tight_layout()
-    wandb.log({"confusion_matrix": wandb.Image(fig)})
-    plt.close(fig)
+    # Native W&B confusion matrix — renders as interactive heatmap, no slider
+    wandb.log({
+        "confusion_matrix": wandb.plot.confusion_matrix(
+            y_true=y_true.tolist(),
+            preds=y_pred.tolist(),
+            class_names=names,
+        )
+    })
 
+    # Native W&B bar chart — renders as clean bar widget, no slider
+    cm = confusion_matrix(y_true, y_pred)
     per_class_acc = cm.diagonal() / cm.sum(axis=1)
-    fig2, ax2 = plt.subplots(figsize=(10, 4))
-    bars = ax2.bar(names, per_class_acc, color=plt.cm.RdYlGn(per_class_acc))
-    ax2.set_ylim(0, 1.1)
-    ax2.set_ylabel("Accuracy")
-    ax2.set_title("Per-class Accuracy (Green = Good, Red = Problematic)")
-    ax2.set_xticklabels(names, rotation=45, ha="right")
-    for bar, acc in zip(bars, per_class_acc):
-        ax2.text(bar.get_x() + bar.get_width()/2,
-                 bar.get_height()+0.01, f"{acc:.2f}", ha="center", fontsize=8)
-    plt.tight_layout()
-    wandb.log({"per_class_accuracy": wandb.Image(fig2)})
-    plt.close(fig2)
-    print("  [W&B] Logged confusion matrix.")
+    bar_data = [[name, float(acc)] for name, acc in zip(names, per_class_acc)]
+    wandb.log({
+        "per_class_accuracy": wandb.plot.bar(
+            wandb.Table(data=bar_data, columns=["class", "accuracy"]),
+            "class",
+            "accuracy",
+            title="Per-class Accuracy",
+        )
+    })
 
- #── Helpers for safe save ──────────────────────────────────────────────────
+    print("  [W&B] Logged confusion matrix & per-class accuracy.")
+
+
+# ── Helpers for safe save ──────────────────────────────────────────────────
 
 def _existing_best_f1(config_path: str) -> float:
     """Read best_val_f1 from an existing config file. Returns -1 if not found."""
@@ -152,7 +149,8 @@ def _existing_best_f1(config_path: str) -> float:
         return -1.0
 
 
-# ── Main ────────────
+# ── Main ───────────────────────────────────────────────────────────────────
+
 def main():
     parser = build_parser()
     args   = parser.parse_args()
@@ -199,11 +197,11 @@ def main():
 
     print(f"  Train:{X_tr.shape[0]}  Val:{X_val.shape[0]}  Test:{X_te.shape[0]}")
 
-    # ── Model ────────
+    # ── Model ─────────────────────────────────────────────────────────────
     model = NeuralNetwork(args)
     print(f"  {model}")
 
-    # ── Training loop ────
+    # ── Training loop ─────────────────────────────────────────────────────
     best_val_f1  = -1.0
     best_weights = None
     global_step  = 0
@@ -218,11 +216,13 @@ def main():
             end  = min(start + args.batch_size, N)
             Xb, yb = X_sh[start:end], y_sh[start:end]
 
-            probs = model.predict_proba(Xb)
+            # forward() returns logits — backward() always expects logits
+            logits = model.forward(Xb)
+            probs  = model.predict_proba(Xb)
             epoch_loss  += model.loss_fn(yb, probs)
             num_batches += 1
 
-            model.backward(yb, probs)
+            model.backward(yb, logits)
 
             if wandb_run and args.log_gradients:
                 if global_step % args.grad_log_steps == 0:
