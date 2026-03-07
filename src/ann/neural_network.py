@@ -166,6 +166,7 @@ class NeuralNetwork:
             out_layer = self.layers[-1]
             out_layer.grad_W = (out_layer._input_cache.T @ delta) / batch_size
             out_layer.grad_b = delta.sum(axis=0, keepdims=True) / batch_size
+            delta = dealta
 
             # ── Propagate through hidden layers ───────────────────────────────
             delta = delta @ out_layer.W.T
