@@ -21,7 +21,7 @@ def load_model(model_path: str) -> dict:
     return data
 
 
-def parse_arguments() -> argparse.ArgumentParser:
+def parse_arguments(args=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Run inference using a saved NumPy MLP model.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -53,14 +53,13 @@ def parse_arguments() -> argparse.ArgumentParser:
     parser.add_argument("--save_model",  type=str, default="src/best_model.npy")
     parser.add_argument("--save_config", type=str, default="src/best_config.json")
     
-    return parser
+    return parser.parse_args(args)
 
 
 #  Main 
 def main():
+    args   = parse_arguments()
     try:
-        parser = parse_arguments()
-        args   = parser.parse_args()
         # Load data 
         print(f"\nLoading dataset: {args.dataset} ...")
         (X_raw_tr, y_raw_tr), (X_raw_te, y_raw_te) = load_dataset(args.dataset)
