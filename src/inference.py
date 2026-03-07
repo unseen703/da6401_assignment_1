@@ -28,20 +28,14 @@ def parse_arguments() -> argparse.ArgumentParser:
     )
     parser.add_argument("-d",  "--dataset",       type=str,   default="mnist",
                         choices=["mnist", "fashion_mnist"])
-    parser.add_argument("-e",  "--epochs",        type=int,   default=30,
-                        help="(unused in inference, kept for CLI parity)")
-    parser.add_argument("-b",  "--batch_size",    type=int,   default=64,
-                        help="(unused in inference, kept for CLI parity)")
+    parser.add_argument("-e",  "--epochs",        type=int,   default=30)
+    parser.add_argument("-b",  "--batch_size",    type=int,   default=64)
     parser.add_argument("-l",  "--loss",          type=str,   default="cross_entropy",
-                        choices=["cross_entropy", "mean_squared_error"],
-                        help="(unused in inference, kept for CLI parity)")
+                        choices=["cross_entropy", "mean_squared_error"])
     parser.add_argument("-o",  "--optimizer",     type=str,   default="rmsprop",
-                        choices=["sgd", "momentum", "nag", "rmsprop"],
-                        help="(unused in inference, kept for CLI parity)")
-    parser.add_argument("-lr", "--learning_rate", type=float, default=0.001,
-                        help="(unused in inference, kept for CLI parity)")
-    parser.add_argument("-wd", "--weight_decay",  type=float, default=0.0,
-                        help="(unused in inference, kept for CLI parity)")
+                        choices=["sgd", "momentum", "nag", "rmsprop"])
+    parser.add_argument("-lr", "--learning_rate", type=float, default=0.001)
+    parser.add_argument("-wd", "--weight_decay",  type=float, default=0.0)
     parser.add_argument("-nhl","--num_layers",    type=int,   default=3,
                         help="Number of hidden layers — must match saved model.")
     parser.add_argument("-sz", "--hidden_size",   type=int,   default=[128, 128, 128],
@@ -51,25 +45,22 @@ def parse_arguments() -> argparse.ArgumentParser:
                         choices=["sigmoid", "tanh", "relu"],
                         help="Activation — must match saved model.")
     parser.add_argument("-w_i", "--weight_init",   type=str,   default="xavier",
-                        choices=["random", "xavier", "zeros"],
-                        help="(unused in inference, kept for CLI parity)")
-    parser.add_argument("-w_p", "--wandb_project", type=str,   default=None,
-                        help="(unused in inference, kept for CLI parity)")
+                        choices=["random", "xavier", "zeros"])
+    parser.add_argument("-w_p", "--wandb_project", type=str,   default=None)
     
     parser.add_argument("--model_path",  type=str, default="src/best_model.npy",
                         help="Path to saved model weights (.npy).")
-    parser.add_argument("--save_model",  type=str, default="src/best_model.npy",
-                        help="(kept for CLI parity with train.py)")
-    parser.add_argument("--save_config", type=str, default="src/best_config.json",
-                        help="(kept for CLI parity with train.py)")
+    parser.add_argument("--save_model",  type=str, default="src/best_model.npy")
+    parser.add_argument("--save_config", type=str, default="src/best_config.json")
+    
     return parser
 
 
 #  Main 
 def main():
-    parser = parse_arguments()
-    args   = parser.parse_args()
     try:
+        parser = parse_arguments()
+        args   = parser.parse_args()
         # Load data 
         print(f"\nLoading dataset: {args.dataset} ...")
         (X_raw_tr, y_raw_tr), (X_raw_te, y_raw_te) = load_dataset(args.dataset)

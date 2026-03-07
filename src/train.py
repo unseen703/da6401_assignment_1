@@ -57,6 +57,7 @@ def parse_arguments() -> argparse.ArgumentParser:
     parser.add_argument("--log_activations", action="store_true")
     parser.add_argument("--log_conf_matrix", action="store_true")
     parser.add_argument("--grad_log_steps",  type=int,  default=50)
+    
     return parser
 
 
