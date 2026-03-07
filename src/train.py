@@ -34,7 +34,7 @@ def parse_arguments() -> argparse.ArgumentParser:
     parser.add_argument("-o",  "--optimizer",     type=str,   default="rmsprop",
                         choices=["sgd", "momentum", "nag", "rmsprop"])
     parser.add_argument("-lr", "--learning_rate", type=float, default=0.001)
-    parser.add_argument("-wd", "--weight_decay",  type=float, default=0.0001)
+    parser.add_argument("-wd", "--weight_decay",  type=float, default=0.00001)
     parser.add_argument("-nhl","--num_layers",    type=int,   default=3)
     parser.add_argument("-sz", "--hidden_size",   type=int,   default=[128, 128, 128],
                         nargs="+",
