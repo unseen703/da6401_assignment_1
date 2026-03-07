@@ -39,10 +39,10 @@ class NeuralNetwork:
 
         input_size  = getattr(cli_args, "input_size",  784)
         output_size = getattr(cli_args, "output_size", 10)
-        num_layers  = getattr(cli_args, "num_layers",  3)
-        hidden_size = getattr(cli_args, "hidden_size", 128)
-        activation  = getattr(cli_args, "activation",  "relu")
-        weight_init = getattr(cli_args, "weight_init", "xavier")
+        num_layers  = cli_args.num_layers
+        hidden_size = cli_args.hidden_size
+        activation  = cli_args.activation
+        weight_init = cli_args.weight_init
 
         # ── Build layer stack ──────────────────────────────────────────────
         # hidden_size can be a single int (all layers same size)
@@ -77,9 +77,9 @@ class NeuralNetwork:
         self.loss_fn, self.loss_grad_fn = get_loss(cli_args.loss)
 
         self.optimizer = get_optimizer(
-            getattr(cli_args, "optimizer", "rmsprop"),
-            learning_rate=getattr(cli_args, "learning_rate", 0.001),
-            weight_decay=getattr(cli_args, "weight_decay", 0.0),
+            cli_args.optimizer,
+            learning_rate=cli_args.learning_rate,
+            weight_decay=cli_args.weight_decay
         )
 
     # ── Forward pass ──────────────────────────────────────────────────────
@@ -105,9 +105,9 @@ class NeuralNetwork:
         except Exception as e:
             print(f"Error during forward pass: {e}")
             raise
-    def predict_proba(self, X):
+    def predict_proba(self, logits):
         """
-        Run forward pass and apply softmax to get class probabilities.
+        Apply softmax to get class probabilities.
         Used for loss computation, accuracy evaluation, and metrics.
 
         Args:
@@ -116,7 +116,7 @@ class NeuralNetwork:
         Returns:
             probs: shape (batch_size, num_classes). Softmax probabilities.
         """
-        return softmax(self.forward(X))
+        return softmax(logits)
 
     # ── Backward pass ─────────────────────────────────────────────────────
 
@@ -138,14 +138,8 @@ class NeuralNetwork:
             grad_w: List[ndarray] — weight gradients, last layer → first layer.
             grad_b: List[ndarray] — bias gradients,   last layer → first layer.
         """
-        # Detect whether y_pred is logits or probabilities.
-        # Probabilities sum to ~1 per row; logits don't.
-        # If already probabilities, use directly. If logits, apply softmax.
-        row_sums = y_pred.sum(axis=1)
-        if np.allclose(row_sums, 1.0, atol=1e-4):
-            probs = y_pred          # already softmax probabilities
-        else:
-            probs = softmax(y_pred) # raw logits — apply softmax
+        
+        probs = softmax(y_pred) # raw logits — apply softmax
 
         loss_gradient = self.loss_grad_fn(y_true, probs)
 
@@ -181,37 +175,16 @@ class NeuralNetwork:
         # Return last → first as required by assignment
         grad_w = [layer.grad_W for layer in reversed(self.layers)]
         grad_b = [layer.grad_b for layer in reversed(self.layers)]
+
         return grad_w, grad_b
 
-    # ── Gradient clipping ─────────────────────────────────────────────────
-
-    def _clip_gradients(self, max_norm: float = 5.0):
-        """
-        Global gradient norm clipping.
-        Scales ALL gradients proportionally if total L2 norm exceeds max_norm.
-        This preserves gradient direction while preventing explosion.
-        """
-        total_norm = 0.0
-        for layer in self.layers:
-            total_norm += np.sum(layer.grad_W ** 2)
-            total_norm += np.sum(layer.grad_b ** 2)
-        total_norm = np.sqrt(total_norm)
-
-        if total_norm > max_norm:
-            scale = max_norm / (total_norm + 1e-8)
-            for layer in self.layers:
-                layer.grad_W *= scale
-                layer.grad_b *= scale
 
     # ── Weight update ─────────────────────────────────────────────────────
 
     def update_weights(self):
         """
         Update weights using the optimizer.
-        Gradient clipping applied here — after backward() stores clean
-        unclipped gradients for the autograder, before optimizer uses them.
         """
-        self._clip_gradients(max_norm=5.0)
         self.optimizer.update(self.layers)
 
         for i, layer in enumerate(self.layers):
@@ -233,7 +206,7 @@ class NeuralNetwork:
         Returns:
             accuracy: float — fraction of correctly classified samples.
         """
-        probs     = self.predict_proba(X)
+        probs     = self.predict_proba(self.forward(X)) 
         predicted = np.argmax(probs, axis=1)
         true      = np.argmax(y,    axis=1)
         return float(np.mean(predicted == true))

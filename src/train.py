@@ -218,7 +218,7 @@ def main():
 
             # forward() returns logits — backward() always expects logits
             logits = model.forward(Xb)
-            probs  = model.predict_proba(Xb)
+            probs  = model.predict_proba(logits)
             epoch_loss  += model.loss_fn(yb, probs)
             num_batches += 1
 
@@ -237,7 +237,7 @@ def main():
         # ── Epoch metrics ─────────────────────────────────────────────────
         avg_loss    = epoch_loss / num_batches
         train_acc   = model.evaluate(X_tr, y_tr)
-        val_probs   = model.predict_proba(X_val)
+        val_probs   = model.predict_proba(model.forward(X_val))
         val_metrics = compute_metrics(y_val, val_probs)
 
         print(
@@ -266,7 +266,7 @@ def main():
     print("\nRestoring best weights for test evaluation...")
     model.set_weights(best_weights)
 
-    test_probs   = model.predict_proba(X_te)
+    test_probs   = model.predict_proba(model.forward(X_te))
     test_metrics = compute_metrics(y_te, test_probs)
 
     print(
