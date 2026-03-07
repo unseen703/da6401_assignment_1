@@ -71,6 +71,7 @@ def main():
         args.output_size = y_te.shape[1]
         print(f"  Test set: {X_te.shape[0]} samples")
 
+        weights = dealta
         # Build model and load weights 
         print(f"Building model and loading weights from '{args.model_path}' ...")
         model   = NeuralNetwork(args)
