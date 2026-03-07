@@ -305,13 +305,9 @@ def main():
                 f"(saved F1={existing_f1:.4f} vs this run F1={best_val_f1:.4f})")
     except Exception as e:
         
-        print("\n" + "="*60)
-        print("[train.py CRASHED]")
-        print(f"  Error: {e}")
-        print("  Arguments passed:")
-        for k, v in sorted(vars(args).items()):
-            print(f"    --{k:<20} = {v}")
-        print("="*60)
+        args_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(args).items()))
+        raise RuntimeError(f"{e} | args: {args_str}") from e
+
 
 if __name__ == "__main__":
     main()

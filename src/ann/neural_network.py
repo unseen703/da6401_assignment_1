@@ -178,15 +178,9 @@ class NeuralNetwork:
 
             return grad_w, grad_b
         except Exception as e:
-            print("\n[backward ERROR]")
-            print(f"  Exception : {e}")
-            print(f"  y_true    : shape={y_true.shape}  dtype={y_true.dtype}")
-            print(f"  y_pred    : shape={y_pred.shape}  dtype={y_pred.dtype}")
-            print(f"  loss      : {self.args.loss}")
-            print(f"  Network   : {self}")
-            for i, layer in enumerate(self.layers):
-                print(f"    Layer {i}: W={layer.W.shape}  grad_W={layer.grad_W.shape}")
-            raise
+            args_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(self.args).items()))
+            raise RuntimeError(f"{e} | args: {args_str}") from e
+
 
     # ── Weight update ─────────────────────────────────────────────────────
 
