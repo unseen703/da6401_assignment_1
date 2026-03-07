@@ -262,6 +262,7 @@ def main():
         # ── Final test evaluation ─────────────────────────────────────────────
         print("\nRestoring best weights for test evaluation...")
         model.set_weights(best_weights)
+        print(model.get_weights())
 
         test_probs   = model.predict_proba(X_te)
         test_metrics = compute_metrics(y_te, test_probs)
@@ -290,7 +291,7 @@ def main():
             np.save(args.save_model, best_weights)
             print(f"\nNew best model saved → '{args.save_model}' "
                 f"(F1: {existing_f1:.4f} → {best_val_f1:.4f})")
-
+        
             # Save config
             config = {
                 **vars(args),

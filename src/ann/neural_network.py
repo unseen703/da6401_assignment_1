@@ -166,7 +166,6 @@ class NeuralNetwork:
             out_layer = self.layers[-1]
             out_layer.grad_W = (out_layer._input_cache.T @ delta) / batch_size
             out_layer.grad_b = delta.sum(axis=0, keepdims=True) / batch_size
-            delta = dealta
 
             # ── Propagate through hidden layers ───────────────────────────────
             delta = delta @ out_layer.W.T
@@ -177,7 +176,7 @@ class NeuralNetwork:
             grad_w = [layer.grad_W for layer in reversed(self.layers)]
             grad_b = [layer.grad_b for layer in reversed(self.layers)]
 
-            return grad_w, grad_b
+            return grad_w.T, grad_b.T
         except Exception as e:
             args_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(self.args).items()))
             print(args_str)
