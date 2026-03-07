@@ -6,11 +6,12 @@
   "optimizer": "rmsprop",
   "learning_rate": 0.001,
   "weight_decay": 0.0002,
-  "num_layers": 3,
+  "num_layers": 4,
   "hidden_size": [
     128,
     128,
-    128
+    128,
+    64
   ],
   "activation": "relu",
   "weight_init": "xavier",
@@ -25,9 +26,9 @@
   "grad_log_steps": 50,
   "input_size": 784,
   "output_size": 10,
-  "best_val_f1": 0.9799570114607923,
-  "test_accuracy": 0.9811,
-  "test_precision": 0.981297646442697,
-  "test_recall": 0.9807744295761388,
-  "test_f1": 0.9809644987991011
+  "best_val_f1": 0.9789152407874482,
+  "test_accuracy": 0.9827,
+  "test_precision": 0.9827285527181975,
+  "test_recall": 0.982363162222671,
+  "test_f1": 0.982510460549854
 }
