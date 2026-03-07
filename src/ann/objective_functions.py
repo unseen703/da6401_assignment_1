@@ -14,7 +14,7 @@ import numpy as np
 # -----------------------------------------------------------------
 
 def cross_entropy_loss(y_true: np.ndarray, y_pred: np.ndarray,
-                        epsilon: float = 1e-12) -> float:
+                        epsilon: float = 1e-15) -> float:
     """
     Categorical cross-entropy loss.
 

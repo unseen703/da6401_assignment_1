@@ -105,7 +105,7 @@ class NeuralNetwork:
         except Exception as e:
             print(f"Error during forward pass: {e}")
             raise
-    def predict_proba(self, logits):
+    def predict_proba(self, X):
         """
         Apply softmax to get class probabilities.
         Used for loss computation, accuracy evaluation, and metrics.
@@ -116,7 +116,7 @@ class NeuralNetwork:
         Returns:
             probs: shape (batch_size, num_classes). Softmax probabilities.
         """
-        return softmax(logits)
+        return softmax(self.forward(X))
 
     # ── Backward pass ─────────────────────────────────────────────────────
 
@@ -179,6 +179,7 @@ class NeuralNetwork:
             return grad_w, grad_b
         except Exception as e:
             args_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(self.args).items()))
+            print(args_str)
             raise RuntimeError(f"{e} | args: {args_str}") from e
 
 
@@ -209,7 +210,7 @@ class NeuralNetwork:
         Returns:
             accuracy: float — fraction of correctly classified samples.
         """
-        probs     = self.predict_proba(self.forward(X)) 
+        probs     = self.predict_proba(X) 
         predicted = np.argmax(probs, axis=1)
         true      = np.argmax(y,    axis=1)
         return float(np.mean(predicted == true))

@@ -79,7 +79,7 @@ def main():
 
         # Run inference
         print("Running inference on test set ...")
-        y_pred_probs = model.predict_proba(model.forward(X_te))
+        y_pred_probs = model.predict_proba(X_te)
         metrics      = compute_metrics(y_te, y_pred_probs)
 
         print(
