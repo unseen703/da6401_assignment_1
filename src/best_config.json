@@ -1,6 +1,6 @@
 {
   "dataset": "mnist",
-  "epochs": 50,
+  "epochs": 45,
   "batch_size": 64,
   "loss": "cross_entropy",
   "optimizer": "rmsprop",
@@ -11,7 +11,7 @@
     128,
     128,
     128,
-    64
+    128
   ],
   "activation": "relu",
   "weight_init": "xavier",
@@ -26,9 +26,9 @@
   "grad_log_steps": 50,
   "input_size": 784,
   "output_size": 10,
-  "best_val_f1": 0.9789152407874482,
-  "test_accuracy": 0.9827,
-  "test_precision": 0.9827285527181975,
-  "test_recall": 0.982363162222671,
-  "test_f1": 0.982510460549854
+  "best_val_f1": 0.9792958089732846,
+  "test_accuracy": 0.9795,
+  "test_precision": 0.9795144782921916,
+  "test_recall": 0.9791496175015844,
+  "test_f1": 0.9792924905336171
 }
