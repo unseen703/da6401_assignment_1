@@ -1,11 +1,11 @@
 {
   "dataset": "mnist",
-  "epochs": 70,
+  "epochs": 50,
   "batch_size": 64,
   "loss": "cross_entropy",
   "optimizer": "rmsprop",
   "learning_rate": 0.001,
-  "weight_decay": 0.0001,
+  "weight_decay": 0.0002,
   "num_layers": 3,
   "hidden_size": [
     128,
@@ -25,9 +25,9 @@
   "grad_log_steps": 50,
   "input_size": 784,
   "output_size": 10,
-  "best_val_f1": 0.9816883689705028,
-  "test_accuracy": 0.9799,
-  "test_precision": 0.9799170424414037,
-  "test_recall": 0.9797894165714324,
-  "test_f1": 0.9798221228818266
+  "best_val_f1": 0.9799570114607923,
+  "test_accuracy": 0.9811,
+  "test_precision": 0.981297646442697,
+  "test_recall": 0.9807744295761388,
+  "test_f1": 0.9809644987991011
 }
