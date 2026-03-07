@@ -20,7 +20,7 @@ from utils.metrics import compute_metrics
 
 # ── CLI ────────────────────────────────────────────────────────────────────
 
-def build_parser() -> argparse.ArgumentParser:
+def parse_arguments() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Train a NumPy MLP on MNIST or Fashion-MNIST.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -152,7 +152,7 @@ def _existing_best_f1(config_path: str) -> float:
 # ── Main ───────────────────────────────────────────────────────────────────
 
 def main():
-    parser = build_parser()
+    parser = parse_arguments()
     args   = parser.parse_args()
 
     # hidden_size comes in as a list due to nargs="+"

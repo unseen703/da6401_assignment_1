@@ -21,7 +21,7 @@ def load_model(model_path: str) -> dict:
     return data
 
 
-def build_parser() -> argparse.ArgumentParser:
+def parse_arguments() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Run inference using a saved NumPy MLP model.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -67,7 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 #  Main 
 def main():
-    parser = build_parser()
+    parser = parse_arguments()
     args   = parser.parse_args()
     try:
         # Load data 
