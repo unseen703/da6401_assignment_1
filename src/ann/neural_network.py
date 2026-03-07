@@ -176,7 +176,7 @@ class NeuralNetwork:
             grad_w = [layer.grad_W for layer in reversed(self.layers)]
             grad_b = [layer.grad_b for layer in reversed(self.layers)]
 
-            return np.array(grad_w).T, np.array(grad_b).T
+            return grad_w, grad_b
         except Exception as e:
             args_str = ", ".join(f"{k}={v}" for k, v in sorted(vars(self.args).items()))
             print(args_str)
