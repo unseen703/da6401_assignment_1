@@ -1,13 +1,17 @@
 {
   "dataset": "mnist",
-  "epochs": 35,
+  "epochs": 30,
   "batch_size": 64,
   "loss": "cross_entropy",
   "optimizer": "rmsprop",
   "learning_rate": 0.001,
   "weight_decay": 0.0,
   "num_layers": 3,
-  "hidden_size": 128,
+  "hidden_size": [
+    128,
+    128,
+    128
+  ],
   "activation": "relu",
   "weight_init": "xavier",
   "wandb_project": null,
@@ -21,9 +25,9 @@
   "grad_log_steps": 50,
   "input_size": 784,
   "output_size": 10,
-  "best_val_f1": 0.9798412909618609,
-  "test_accuracy": 0.9785,
-  "test_precision": 0.9782759624116908,
-  "test_recall": 0.9783740784118278,
-  "test_f1": 0.9783136244512791
+  "best_val_f1": 0.9800851115735499,
+  "test_accuracy": 0.9805,
+  "test_precision": 0.9803410928629532,
+  "test_recall": 0.980350362206331,
+  "test_f1": 0.980320402435179
 }

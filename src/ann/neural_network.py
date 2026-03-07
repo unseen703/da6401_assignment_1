@@ -138,46 +138,55 @@ class NeuralNetwork:
             grad_w: List[ndarray] — weight gradients, last layer → first layer.
             grad_b: List[ndarray] — bias gradients,   last layer → first layer.
         """
-        
-        probs = softmax(y_pred) # raw logits — apply softmax
+        try:
+            probs = softmax(y_pred) # raw logits — apply softmax
 
-        loss_gradient = self.loss_grad_fn(y_true, probs)
+            loss_gradient = self.loss_grad_fn(y_true, probs)
 
-        if self.args.loss == "cross_entropy":
-            # Cross-entropy + softmax exact combined gradient:
-            # dL/dz = (probs - y_true) / N  — already normalised by loss_grad_fn
-            delta = loss_gradient
+            if self.args.loss == "cross_entropy":
+                # Cross-entropy + softmax exact combined gradient:
+                # dL/dz = (probs - y_true) / N  — already normalised by loss_grad_fn
+                delta = loss_gradient
 
-        else:
-            # MSE + softmax: FULL softmax Jacobian (vectorised over batch).
-            #
-            # Diagonal approximation s*(1-s) vanishes when model gets confident
-            # (s→1 for correct class), killing the gradient and causing loss to
-            # rise from batch noise. Full Jacobian fixes this:
-            #
-            #   dL/dz[j] = s[j] * (g[j] - dot(g, s))
-            s   = probs
-            g   = loss_gradient
-            dot = (g * s).sum(axis=1, keepdims=True)   # (N, 1)
-            delta = s * (g - dot)                       # (N, C)
+            else:
+                # MSE + softmax: FULL softmax Jacobian (vectorised over batch).
+                #
+                # Diagonal approximation s*(1-s) vanishes when model gets confident
+                # (s→1 for correct class), killing the gradient and causing loss to
+                # rise from batch noise. Full Jacobian fixes this:
+                #
+                #   dL/dz[j] = s[j] * (g[j] - dot(g, s))
+                s   = probs
+                g   = loss_gradient
+                dot = (g * s).sum(axis=1, keepdims=True)   # (N, 1)
+                delta = s * (g - dot)                       # (N, C)
 
-        # ── Output layer parameter gradients ──────────────────────────────
-        batch_size = y_true.shape[0]
-        out_layer = self.layers[-1]
-        out_layer.grad_W = (out_layer._input_cache.T @ delta) / batch_size
-        out_layer.grad_b = delta.sum(axis=0, keepdims=True) / batch_size
+            # ── Output layer parameter gradients ──────────────────────────────
+            batch_size = y_true.shape[0]
+            out_layer = self.layers[-1]
+            out_layer.grad_W = (out_layer._input_cache.T @ delta) / batch_size
+            out_layer.grad_b = delta.sum(axis=0, keepdims=True) / batch_size
 
-        # ── Propagate through hidden layers ───────────────────────────────
-        delta = delta @ out_layer.W.T
-        for layer in reversed(self.layers[:-1]):
-            delta = layer.backward(delta)
+            # ── Propagate through hidden layers ───────────────────────────────
+            delta = delta @ out_layer.W.T
+            for layer in reversed(self.layers[:-1]):
+                delta = layer.backward(delta)
 
-        # Return last → first as required by assignment
-        grad_w = [layer.grad_W for layer in reversed(self.layers)]
-        grad_b = [layer.grad_b for layer in reversed(self.layers)]
+            # Return last → first as required by assignment
+            grad_w = [layer.grad_W for layer in reversed(self.layers)]
+            grad_b = [layer.grad_b for layer in reversed(self.layers)]
 
-        return grad_w, grad_b
-
+            return grad_w, grad_b
+        except Exception as e:
+            print("\n[backward ERROR]")
+            print(f"  Exception : {e}")
+            print(f"  y_true    : shape={y_true.shape}  dtype={y_true.dtype}")
+            print(f"  y_pred    : shape={y_pred.shape}  dtype={y_pred.dtype}")
+            print(f"  loss      : {self.args.loss}")
+            print(f"  Network   : {self}")
+            for i, layer in enumerate(self.layers):
+                print(f"    Layer {i}: W={layer.W.shape}  grad_W={layer.grad_W.shape}")
+            raise
 
     # ── Weight update ─────────────────────────────────────────────────────
 
